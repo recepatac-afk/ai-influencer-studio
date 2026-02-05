@@ -1,0 +1,8 @@
+{
+  "name": " AI Influencer Studio",
+  "description": "A high-end platform for generating unique AI influencers with distinct personalities, stunning visuals, and short-form videos using Gemini and Veo.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
