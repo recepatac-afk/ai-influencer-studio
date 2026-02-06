@@ -1,18 +1,4 @@
 
-Çok haklısın, bazen arayüz linkleri gizleyebiliyor. Bu sefer linki **açık açık, uzun haliyle** yazıyorum.
-
-Aşağıdaki uzun adresi kopyala ve tarayıcının adres çubuğuna yapıştırıp Enter'a bas:
-
-`https://github.com/recepatac-afk/ai-influencer-studio/edit/main/services/geminiService.ts`
-
-### Sayfa Açılınca Ne Yapacaksın?
-
-1. İçindeki kodların **tamamını sil.**
-2. Aşağıdaki kodu kopyalayıp oraya yapıştır.
-3. Sağ üstteki yeşil **"Commit changes"** butonuna bas.
-
-İşte yapıştırman gereken kod:
-
 ```typescript
 import { GoogleGenAI, Type } from "@google/genai";
 import { InfluencerData, NicheType, PersonalityType, InfluencerPersona, InfluencerProfile } from "../types";
@@ -26,7 +12,7 @@ const base64ToPart = (base64: string) => {
   return { inlineData: { data, mimeType } };
 };
 
-// 📸 FOTOĞRAF ÜRETİMİ (Imagen 3 Modeli)
+// 📸 FOTOĞRAF ÜRETİMİ (Imagen 3 Modeli - GERÇEK MOD)
 export const generateInfluencerPhotos = async (data: InfluencerData): Promise<string[]> => {
   const ai = getAI();
   
@@ -43,6 +29,7 @@ export const generateInfluencerPhotos = async (data: InfluencerData): Promise<st
   try {
       const parts: any[] = [{ text: prompt }];
       
+      // Yüklenen resimleri modele ekle
       if (data.images.length > 0) {
         data.images.forEach(img => parts.push(base64ToPart(img)));
         parts[0].text += " (Reference images provided for facial structure/identity)";
@@ -83,12 +70,14 @@ export const generateInfluencerPhotos = async (data: InfluencerData): Promise<st
         }
       }
       
-      if (urls.length === 0) throw new Error("Görüntü oluşturulamadı.");
+      if (urls.length === 0) throw new Error("Görüntü oluşturulamadı. Model yanıtı boş.");
       return urls;
 
-  } catch (finalError) {
+  } catch (finalError: any) {
       console.error("Görüntü üretimi başarısız:", finalError);
-      return ["https://via.placeholder.com/1024x1024?text=Resim+Uretilemedi"];
+      // Hata olursa kullanıcıya hatayı gösterelim ki anlasın
+      alert("Resim üretilemedi. Hata: " + (finalError.message || finalError));
+      return [];
   }
 };
 
@@ -97,7 +86,7 @@ export const generateReferenceImage = async (data: InfluencerData): Promise<stri
   return images[0] || ""; 
 };
 
-// 🎥 VİDEO ÜRETİMİ (Veo Modeli)
+// 🎥 VİDEO ÜRETİMİ (Veo Modeli - GERÇEK MOD)
 export const generateInfluencerVideo = async (data: InfluencerData | InfluencerProfile, promptOrRefFrame: string): Promise<string> => {
   const ai = getAI();
   
@@ -151,13 +140,14 @@ export const generateInfluencerVideo = async (data: InfluencerData | InfluencerP
     const downloadLink = operation.result?.generatedVideos?.[0]?.video?.uri;
     if (!downloadLink) throw new Error("Video linki alınamadı");
     return downloadLink;
-  } catch (e) {
+  } catch (e: any) {
       console.error("Video hatası:", e);
+      alert("Video üretilemedi. Hata: " + (e.message || e));
       throw new Error("Video üretimi başarısız.");
   }
 };
 
-// 👤 PERSONA ÜRETİMİ (Metin Modeli)
+// 👤 PERSONA ÜRETİMİ (Metin Modeli - Gemini 2.0 Flash)
 export const generatePersona = async (niche: NicheType, personality: PersonalityType, notes: string): Promise<InfluencerPersona> => {
   const ai = getAI();
   const response = await ai.models.generateContent({
@@ -184,7 +174,7 @@ export const generatePersona = async (niche: NicheType, personality: Personality
   return JSON.parse(text) as InfluencerPersona;
 };
 
-// 🖼️ PROFİL RESMİ (Ressam Modeli)
+// 🖼️ PROFİL RESMİ (Ressam Modeli - Imagen 3)
 export const generateInfluencerImage = async (profile: InfluencerProfile, prompt: string): Promise<string> => {
   const ai = getAI();
   const fullPrompt = `Influencer photography of ${profile.name}, ${profile.niche} niche.
