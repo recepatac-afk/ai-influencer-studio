@@ -1,80 +1,84 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+// Vercel Serverless Function - Google Imagen Proxy
+export default async function handler(req, res) {
+  // 1. CORS Ayarları (Tarayıcının erişmesine izin ver)
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+  );
 
-export default async function handler(
-  request: VercelRequest,
-  response: VercelResponse
-) {
-  if (request.method !== 'POST') {
-    return response.status(405).json({ error: 'Method not allowed' });
-  }
-
-  const { prompt } = request.body;
-  const stabilityKey = process.env.VITE_STABILITY_API_KEY;
-
-  if (!stabilityKey) {
-    return response.status(500).json({ error: 'API key not configured' });
-  }
-
-  if (!prompt) {
-    return response.status(400).json({ error: 'Prompt is required' });
+  // Tarayıcı önden "Erişebilir miyim?" diye sorarsa (OPTIONS) "Evet" de.
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
   }
 
   try {
-    console.log('🎨 Stability AI ile resim üretiliyor (Backend)...');
+    // 2. İstekten gelen prompt'u al
+    const { prompt } = req.body || {};
+    
+    if (!prompt) {
+        return res.status(400).json({ error: 'Prompt (komut) eksik.' });
+    }
 
-    const stabilityResponse = await fetch(
-      'https://api.stability.ai/v1/generate',
+    // 3. API Anahtarını Kontrol Et
+    const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+    
+    if (!apiKey) {
+        throw new Error("Sunucuda API Anahtarı (VITE_GEMINI_API_KEY) bulunamadı. Vercel ayarlarını kontrol et.");
+    }
+
+    console.log("Google API'ye istek gönderiliyor...");
+
+    // 4. Google Imagen 3 Modeline Doğrudan İstek At (SDK kullanmadan fetch ile)
+    const googleResponse = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${apiKey}`,
       {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${stabilityKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          prompt: prompt,
-          samples: 1,
-          steps: 30,
-          guidance_scale: 7.5,
-          width: 512,
-          height: 768,
-        }),
+          instances: [
+            { prompt: prompt }
+          ],
+          parameters: {
+            sampleCount: 1,
+            aspectRatio: "9:16" 
+          }
+        })
       }
     );
 
-    if (!stabilityResponse.ok) {
-      const errorData = await stabilityResponse.json().catch(() => ({ message: 'Unknown error' }));
-      console.error('Stability API Error:', stabilityResponse.status, errorData);
-      return response.status(stabilityResponse.status).json({
-        error: `Stability API Error: ${errorData.message || stabilityResponse.statusText}`,
-      });
+    if (!googleResponse.ok) {
+        const errorText = await googleResponse.text();
+        console.error("Google API Hatası:", errorText);
+        throw new Error(`Google API Hatası: ${errorText}`);
     }
 
-    const data = await stabilityResponse.json();
+    const data = await googleResponse.json();
+    
+    // 5. Gelen Resmi Base64 Olarak Al
+    // Google'ın yanıt yapısı: predictions[0].bytesBase64Encoded
+    const imageBase64 = data.predictions?.[0]?.bytesBase64Encoded;
 
-    if (!data.artifacts || data.artifacts.length === 0) {
-      return response.status(400).json({ error: 'No images returned from Stability AI' });
+    if (!imageBase64) {
+        throw new Error("Google boş resim verisi döndürdü.");
     }
 
-    const imageBase64 = data.artifacts[0].base64;
-    console.log('✅ Resim başarıyla oluşturuldu!');
-
-    return response.status(200).json({
-      success: true,
-      image: `data:image/png;base64,${imageBase64}`,
+    // 6. Başarılı Sonucu Frontend'e Gönder
+    return res.status(200).json({ 
+        success: true, 
+        image: `data:image/png;base64,${imageBase64}` 
     });
-  } catch (error: any) {
-    console.error('❌ Backend Error:', error.message);
-    return response.status(500).json({
-      error: `Backend Error: ${error.message}`,
+
+  } catch (error) {
+    console.error("Sunucu Hatası:", error);
+    // Frontend'in anlayacağı formatta hata dön
+    return res.status(500).json({ 
+        error: error.message || "Bilinmeyen sunucu hatası" 
     });
   }
 }
-```
-```
-4. Commit message: "Add: api/generateImage.ts for Stability AI backend proxy"
-5. [Commit changes]
-```
-
----
-
-
