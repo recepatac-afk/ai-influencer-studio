@@ -42,7 +42,7 @@ export const generateInfluencerPhotos = async (data: InfluencerData): Promise<st
     console.log("🎨 Stability AI ile resim üretiliyor...");
     
     const response = await fetch(
-      "https://api.stability.ai/v1/generate",
+     "https://api.stability.ai/v2/stable-image/generate/ultra",
       {
         method: "POST",
         headers: {
