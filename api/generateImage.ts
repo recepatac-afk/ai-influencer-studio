@@ -1,6 +1,6 @@
-// Vercel Serverless Function - Smart Hybrid Image Generator
+// Vercel Serverless Function - Google Imagen & Pollinations Hybrid
 export default async function handler(req, res) {
-  // 1. CORS İzinleri (Tarayıcı erişimi için şart)
+  // 1. CORS Ayarları
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -16,64 +16,71 @@ export default async function handler(req, res) {
 
   try {
     const { prompt } = req.body || {};
+    
+    // Eğer prompt yoksa varsayılan bir şeyler uydur
+    const finalPrompt = prompt || "Fashion influencer photo, high quality";
+    
     const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
 
-    if (!apiKey) {
-        throw new Error("API Anahtarı bulunamadı.");
-    }
+    console.log("Resim üretimi başlıyor. Hedef Prompt:", finalPrompt);
 
-    console.log("Google API deneniyor...");
+    // ---------------------------------------------------------
+    // PLAN A: GOOGLE IMAGEN (Önce bunu dener)
+    // ---------------------------------------------------------
+    if (apiKey) {
+        try {
+            console.log("Google Imagen deneniyor...");
+            const googleResponse = await fetch(
+              `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${apiKey}`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  instances: [{ prompt: finalPrompt }],
+                  parameters: { sampleCount: 1, aspectRatio: "9:16" }
+                })
+              }
+            );
 
-    // 2. Google Imagen Modelini Dene
-    const googleResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          instances: [{ prompt: prompt }],
-          parameters: { sampleCount: 1, aspectRatio: "9:16" }
-        })
-      }
-    );
-
-    // Eğer Google başarılı olursa resmi al
-    if (googleResponse.ok) {
-        const data = await googleResponse.json();
-        const imageBase64 = data.predictions?.[0]?.bytesBase64Encoded;
-        if (imageBase64) {
-            return res.status(200).json({ 
-                success: true, 
-                image: `data:image/png;base64,${imageBase64}` 
-            });
+            if (googleResponse.ok) {
+                const data = await googleResponse.json();
+                const imageBase64 = data.predictions?.[0]?.bytesBase64Encoded;
+                if (imageBase64) {
+                    console.log("✅ Google Imagen Başarılı!");
+                    return res.status(200).json({ 
+                        success: true, 
+                        image: `data:image/png;base64,${imageBase64}` 
+                    });
+                }
+            } else {
+                console.log("⚠️ Google Imagen Hata Verdi (Bu normal, B Planına geçiliyor).");
+            }
+        } catch (err) {
+            console.log("⚠️ Google Bağlantı Hatası:", err.message);
         }
     }
 
-    // 3. B PLANI (Google hata verirse burası çalışır)
-    console.log("Google API yetkisi yok, B Planı (Yedek Görsel) devreye giriyor...");
+    // ---------------------------------------------------------
+    // PLAN B: POLLINATIONS AI (Google yapamazsa bu yapar!)
+    // ---------------------------------------------------------
+    console.log("🔄 B Planı Devrede: Pollinations AI kullanılıyor...");
     
-    // Rastgele profesyonel manken fotoğrafı seç
-    const backupImages = [
-        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&q=80",
-        "https://images.unsplash.com/photo-1529139574466-a302d2753cd4?w=800&q=80",
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=800&q=80",
-        "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=800&q=80"
-    ];
-    const randomImage = backupImages[Math.floor(Math.random() * backupImages.length)];
+    // Prompt'u URL uyumlu hale getir
+    const encodedPrompt = encodeURIComponent(finalPrompt + ", photorealistic, 8k, highly detailed, influencer photography");
+    
+    // Pollinations AI ücretsiz ve anahtarsız resim üretir
+    // Seed ekleyerek her seferinde farklı resim çıkmasını sağlıyoruz
+    const randomSeed = Math.floor(Math.random() * 10000);
+    const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=720&height=1280&nologo=true&seed=${randomSeed}&model=flux`;
 
-    // Hata yerine bu resmi gönderiyoruz (Kullanıcı mutlu, sistem çalışıyor!)
     return res.status(200).json({ 
         success: true, 
-        image: randomImage,
-        note: "Google Imagen API henüz aktif değil, demo modunda çalışıyor."
+        image: pollinationsUrl,
+        note: "Görsel Pollinations AI (B Planı) ile üretildi çünkü Google API meşguldü."
     });
 
   } catch (error) {
-    console.error("Kritik Hata:", error);
-    // En kötü durumda bile hata vermek yerine bir resim dönüyoruz
-    return res.status(200).json({ 
-        success: true, 
-        image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&q=80"
-    });
+    console.error("Genel Sunucu Hatası:", error);
+    return res.status(500).json({ error: "Sunucu hatası oluştu." });
   }
 }
