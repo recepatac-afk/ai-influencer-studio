@@ -28,7 +28,7 @@ const base64ToPart = (base64: string) => {
   return { inlineData: { data, mimeType } };
 };
 
-// 📸 RESİM ÜRETİMİ - STABILITY AI
+// 📸 RESİM ÜRETİMİ - STABILITY AI (YENİ ENDPOINT)
 export const generateInfluencerPhotos = async (data: InfluencerData): Promise<string[]> => {
   const prompt = `Photorealistic influencer photo, 8k resolution.
     Subject: ${data.scenario.role}, ${data.scenario.pose} pose, ${data.scenario.emotion} expression.
@@ -42,7 +42,7 @@ export const generateInfluencerPhotos = async (data: InfluencerData): Promise<st
     console.log("🎨 Stability AI ile resim üretiliyor...");
     
     const response = await fetch(
-     "https://api.stability.ai/v2/stable-image/generate/ultra",
+      "https://api.stability.ai/v2/stable-image/generate/ultra",
       {
         method: "POST",
         headers: {
@@ -51,29 +51,24 @@ export const generateInfluencerPhotos = async (data: InfluencerData): Promise<st
         },
         body: JSON.stringify({
           prompt: prompt,
-          samples: 1,
-          steps: 30,
-          guidance_scale: 7.5,
-          width: 512,
-          height: 768,
+          output_format: "png",
         }),
       }
     );
 
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.json().catch(() => ({ message: "Unknown error" }));
+      console.error("Stability API response:", response.status, errorData);
       throw new Error(`Stability API Error: ${errorData.message || response.statusText}`);
     }
 
     const data_response = await response.json();
 
-    if (!data_response.artifacts || data_response.artifacts.length === 0) {
+    if (!data_response.image) {
       throw new Error("Stability API yanıtında resim yok");
     }
 
-    const urls = data_response.artifacts.map((artifact: any) =>
-      `data:image/png;base64,${artifact.base64}`
-    );
+    const urls = [`data:image/png;base64,${data_response.image}`];
 
     console.log("✅ Resim başarıyla oluşturuldu!");
     return urls;
