@@ -77,27 +77,4 @@ export default async function handler(
 
 ---
 
-### 3️⃣ Vercel Redeploy Et
-```
-Vercel Dashboard
-→ Deployments
-→ [...menü]
-→ Redeploy
-```
 
----
-
-## 📸 KONTROL:
-
-Bana GitHub'da şu screenshot'ı gönder:
-```
-https://github.com/recepatac-afk/ai-influencer-studio
-
-Klasör yapısı:
-├── api/
-│   └── generateImage.ts ← BURASI VAR MI?
-├── src/
-│   ├── services/
-│   │   └── geminiService.ts
-│   └── ...
-└── ...
