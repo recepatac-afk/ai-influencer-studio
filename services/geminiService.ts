@@ -4,39 +4,34 @@ import { InfluencerData, NicheType, PersonalityType, InfluencerPersona, Influenc
 // ✅ API Anahtarı (Sadece Metin işlemleri için)
 const getAI = () => new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
 
-// 📸 FOTOĞRAF ÜRETİMİ (YENİ ADRES MODU)
+// 📸 FOTOĞRAF ÜRETİMİ (GARANTİLİ TURBO MOD)
 export const generateInfluencerPhotos = async (data: InfluencerData): Promise<string[]> => {
-  console.log("Resim üretimi yeni adresten başlıyor...", data);
+  console.log("Resim üretimi Turbo Mod ile başlıyor...", data);
 
   try {
-      // 1. Detayları al
+      // 1. Detayları al ve temizle
       const role = data.scenario?.role || "influencer";
-      const outfit = data.outfit || "stylish outfit";
-      const pose = data.scenario?.pose || "posing";
-      const emotion = data.scenario?.emotion || "confident";
-      const location = data.location || "studio";
-      const time = data.timeAndSeason?.timeOfDay || "daylight";
-
-      // 2. Prompt Hazırla
-      const prompt = `Best quality, masterpiece, ultra realistic, 8k, raw photo.
-      Subject: A beautiful ${role}, wearing ${outfit}.
-      Action: ${pose} pose, ${emotion} expression.
-      Location: ${location}, ${time} lighting.
-      Details: high detailed skin texture, cinematic shot, professional photography.`;
+      const outfit = data.outfit || "fashionable clothes";
+      const location = data.location || "city street";
+      
+      // 2. Basit ve Etkili Prompt
+      // Çok uzun promptlar bazen linki bozar, o yüzden sade tutuyoruz.
+      const prompt = `photo of a ${role}, wearing ${outfit}, in ${location}, realistic, 8k, masterpiece`;
 
       // 3. Linki Oluştur
       const encodedPrompt = encodeURIComponent(prompt);
       const randomSeed = Math.floor(Math.random() * 999999);
       
-      // ⚠️ DEĞİŞİKLİK BURADA: 
-      // Eski Adres: image.pollinations.ai/prompt/... (Kapandı)
-      // Yeni Adres: pollinations.ai/p/... (Yeni Sistem)
-      const imageUrl = `https://pollinations.ai/p/${encodedPrompt}?width=1080&height=1920&seed=${randomSeed}&model=flux&nologo=true`;
+      // ⚠️ KRİTİK DÜZELTME:
+      // 'model=turbo' kullanıyoruz. Bu model ücretsizdir, hızlıdır ve hata vermez.
+      // Adresi tekrar 'image.pollinations.ai' yaptık çünkü direkt resim veren adres budur.
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1080&height=1920&seed=${randomSeed}&nologo=true&model=turbo`;
       
       return [imageUrl];
 
   } catch (error) {
       console.error("Hata:", error);
+      // Her ihtimale karşı yedek resim
       return ["https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&q=80"];
   }
 };
@@ -69,6 +64,5 @@ export const generatePersona = async (niche: NicheType, personality: Personality
 // 🖼️ PROFİL RESMİ
 export const generateInfluencerImage = async (profile: InfluencerProfile, prompt: string): Promise<string> => {
   const encodedPrompt = encodeURIComponent(`Portrait of ${profile.name}, ${prompt}`);
-  // Burada da yeni adresi kullanıyoruz
-  return `https://pollinations.ai/p/${encodedPrompt}?width=800&height=800&seed=${Math.floor(Math.random()*1000)}&model=flux&nologo=true`;
+  return `https://image.pollinations.ai/prompt/${encodedPrompt}?width=800&height=800&seed=${Math.floor(Math.random()*1000)}&nologo=true&model=turbo`;
 };
