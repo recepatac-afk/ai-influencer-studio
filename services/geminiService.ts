@@ -9,22 +9,21 @@ export const generateInfluencerPhotos = async (data: InfluencerData): Promise<st
   console.log("Resim üretimi Turbo Mod ile başlıyor...", data);
 
   try {
-      // 1. Detayları al ve temizle
+      // 1. Detayları al
       const role = data.scenario?.role || "influencer";
       const outfit = data.outfit || "fashionable clothes";
       const location = data.location || "city street";
       
-      // 2. Basit ve Etkili Prompt
-      // Çok uzun promptlar bazen linki bozar, o yüzden sade tutuyoruz.
+      // 2. Prompt (Komut) Hazırla
       const prompt = `photo of a ${role}, wearing ${outfit}, in ${location}, realistic, 8k, masterpiece`;
 
       // 3. Linki Oluştur
       const encodedPrompt = encodeURIComponent(prompt);
       const randomSeed = Math.floor(Math.random() * 999999);
       
-      // ⚠️ KRİTİK DÜZELTME:
+      // ⚠️ İŞTE ÇÖZÜM BURADA:
       // 'model=turbo' kullanıyoruz. Bu model ücretsizdir, hızlıdır ve hata vermez.
-      // Adresi tekrar 'image.pollinations.ai' yaptık çünkü direkt resim veren adres budur.
+      // Adresi tekrar 'image.pollinations.ai' yaptık çünkü direkt resim dosyası veren adres budur.
       const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1080&height=1920&seed=${randomSeed}&nologo=true&model=turbo`;
       
       return [imageUrl];
@@ -64,5 +63,6 @@ export const generatePersona = async (niche: NicheType, personality: Personality
 // 🖼️ PROFİL RESMİ
 export const generateInfluencerImage = async (profile: InfluencerProfile, prompt: string): Promise<string> => {
   const encodedPrompt = encodeURIComponent(`Portrait of ${profile.name}, ${prompt}`);
+  // Profil resminde de turbo kullanalım
   return `https://image.pollinations.ai/prompt/${encodedPrompt}?width=800&height=800&seed=${Math.floor(Math.random()*1000)}&nologo=true&model=turbo`;
 };
