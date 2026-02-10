@@ -3,46 +3,49 @@ import { InfluencerData, NicheType, PersonalityType, InfluencerPersona, Influenc
 
 const getAI = () => new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
 
-// 🛠️ ÖZEL TEMİZLEYİCİ (CORB Hatasını Önler)
-// Boşlukları ve garip harfleri siler, kelimeleri "_" ile birleştirir.
-// Örnek: "Kırmızı Elbise" -> "Kirmizi_Elbise" olur.
+// 🛡️ VERCEL UYUMLU TEMİZLEYİCİ
+// Türkçe karakterleri, boşlukları ve emojileri yok eder.
+// "Kırmızı Elbise" -> "kirmizi_elbise" olur.
 const cleanText = (text: string) => {
+  if (!text) return "model";
   return text
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Türkçe harfleri İngilizce yap
-    .replace(/[^a-zA-Z0-9 ]/g, "") // Özel işaretleri sil
-    .trim()
-    .replace(/\s+/g, "_"); // BOŞLUKLARI ALT ÇİZGİ YAP (Çok Önemli)
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Türkçe harfleri İngilizceye çevir
+    .replace(/[^a-zA-Z0-9]/g, "_") // Harf olmayan her şeyi alt çizgi yap
+    .replace(/_+/g, "_") // Çift alt çizgileri teke indir
+    .toLowerCase()
+    .trim();
 };
 
 export const generateInfluencerPhotos = async (data: InfluencerData): Promise<string[]> => {
-  console.log("Resim üretimi 'Basit Link Modu' ile başlıyor...", data);
+  console.log("📸 Vercel Modu Başlatılıyor...");
 
   try {
       const role = cleanText(data.scenario?.role || "influencer");
       const outfit = cleanText(data.outfit || "fashion");
       const location = cleanText(data.location || "studio");
 
-      // Prompt'u dosya ismi gibi hazırlıyoruz
-      // Örnek: photo_of_influencer_wearing_fashion_in_studio_realistic
-      const prompt = `photo_of_${role}_wearing_${outfit}_in_${location}_realistic`;
+      // 1. Basit Prompt Oluştur (Boşluk yok, sadece alt çizgi)
+      const safePrompt = `photo_of_${role}_wearing_${outfit}_in_${location}_realistic_8k`;
       
-      const randomSeed = Math.floor(Math.random() * 999999);
+      const randomSeed = Math.floor(Math.random() * 100000);
 
-      // ⚠️ FARK BURADA:
-      // 1. encodeURIComponent YOK (Tarayıcıyı yormaz)
-      // 2. .jpg uzantısı VAR
-      // 3. model=turbo (Çok hızlıdır, CORB hatasına düşmez)
-      const imageUrl = `https://pollinations.ai/p/${prompt}.jpg?width=720&height=1280&nologo=true&seed=${randomSeed}&model=turbo`;
+      // ⚠️ İŞTE ÇÖZÜMÜN KALBİ:
+      // Adres: https://pollinations.ai/p/
+      // Dosya Adı: safePrompt + .jpg (Bu .jpg uzantısı CORB hatasını %100 engeller)
+      // Parametreler: model=turbo (Hız için), nologo=true
+      const imageUrl = `https://pollinations.ai/p/${safePrompt}.jpg?width=720&height=1280&model=turbo&nologo=true&seed=${randomSeed}`;
       
-      console.log("✅ Oluşturulan Link:", imageUrl);
+      console.log("✅ ÜRETİLEN LİNK:", imageUrl);
       
       return [imageUrl];
 
   } catch (error) {
-      console.error("Hata:", error);
+      console.error("❌ Hata:", error);
       return ["https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&q=80"];
   }
 };
+
+// --- Diğer Fonksiyonlar Olduğu Gibi Kalıyor ---
 
 export const generateReferenceImage = async (data: InfluencerData): Promise<string> => {
   const images = await generateInfluencerPhotos(data);
@@ -69,5 +72,5 @@ export const generatePersona = async (niche: NicheType, personality: Personality
 
 export const generateInfluencerImage = async (profile: InfluencerProfile, prompt: string): Promise<string> => {
   const safeName = cleanText(profile.name || "User");
-  return `https://pollinations.ai/p/Portrait_of_${safeName}.jpg?width=800&height=800&nologo=true&seed=${Math.floor(Math.random()*1000)}&model=turbo`;
+  return `https://pollinations.ai/p/portrait_of_${safeName}.jpg?width=800&height=800&nologo=true&seed=${Math.floor(Math.random()*1000)}&model=turbo`;
 };
