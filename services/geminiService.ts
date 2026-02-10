@@ -4,29 +4,48 @@ import { InfluencerData, NicheType, PersonalityType, InfluencerPersona, Influenc
 // ✅ API Anahtarı (Sadece Metin işlemleri için)
 const getAI = () => new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
 
-// 📸 FOTOĞRAF ÜRETİMİ (STANDART & GARANTİLİ MOD)
+// Türkçe karakterleri İngilizceye çeviren yardımcı fonksiyon
+const cleanText = (text: string) => {
+  return text
+    .replace(/ğ/g, "g").replace(/Ğ/g, "G")
+    .replace(/ü/g, "u").replace(/Ü/g, "U")
+    .replace(/ş/g, "s").replace(/Ş/g, "S")
+    .replace(/ı/g, "i").replace(/İ/g, "I")
+    .replace(/ö/g, "o").replace(/Ö/g, "O")
+    .replace(/ç/g, "c").replace(/Ç/g, "C")
+    // Linki bozabilecek diğer her şeyi sil (Sadece harf, sayı ve boşluk kalsın)
+    .replace(/[^a-zA-Z0-9 ]/g, "")
+    .trim();
+};
+
+// 📸 FOTOĞRAF ÜRETİMİ (FİNAL VERSİYON)
 export const generateInfluencerPhotos = async (data: InfluencerData): Promise<string[]> => {
-  console.log("Resim üretimi Standart Mod ile başlıyor...", data);
+  console.log("Resim üretimi Final Mod ile başlıyor...", data);
 
   try {
-      // 1. Detayları al
+      // 1. Verileri al
       const role = data.scenario?.role || "influencer";
-      const outfit = data.outfit || "fashionable clothes";
+      const outfit = data.outfit || "fashion";
       const location = data.location || "studio";
-      const emotion = data.scenario?.emotion || "confident";
+      const emotion = data.scenario?.emotion || "cool";
+
+      // 2. Prompt'u hazırla (Türkçe karakterleri temizle!)
+      // Örnek: "İş Gücü" -> "Is Gucu" olur. Bu sayede link bozulmaz.
+      const safeRole = cleanText(role);
+      const safeOutfit = cleanText(outfit);
+      const safeLocation = cleanText(location);
+      const safeEmotion = cleanText(emotion);
       
-      // 2. Prompt (Komut) Hazırla
-      const prompt = `photo of a ${role} wearing ${outfit} in ${location}, ${emotion} expression, realistic, 8k, masterpiece`;
+      const prompt = `photo of a ${safeRole} wearing ${safeOutfit} in ${safeLocation}, ${safeEmotion} look, realistic, 8k, masterpiece`;
 
       // 3. Linki Oluştur
+      // encodeURIComponent ile boşlukları %20 yaparız
       const encodedPrompt = encodeURIComponent(prompt);
       const randomSeed = Math.floor(Math.random() * 999999);
       
-      // ⚠️ KESİN ÇÖZÜM BURASI:
-      // 'image.pollinations.ai' adresini kullanıyoruz.
-      // Soru işaretinden sonraki parametreler (width, height, seed) resmin bozulmasını engeller.
-      // Model belirtmiyoruz, sistem en hızlısını kendi seçsin ki hata vermesin.
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1080&height=1920&nologo=true&seed=${randomSeed}`;
+      // ⚠️ YENİ ADRES YAPISI:
+      // pollinations.ai/p/ + PROMPT + .jpg + PARAMETRELER
+      const imageUrl = `https://pollinations.ai/p/${encodedPrompt}.jpg?width=1080&height=1920&nologo=true&seed=${randomSeed}&model=flux`;
       
       console.log("Oluşturulan Resim Linki:", imageUrl);
       
@@ -34,7 +53,6 @@ export const generateInfluencerPhotos = async (data: InfluencerData): Promise<st
 
   } catch (error) {
       console.error("Hata:", error);
-      // Her ihtimale karşı çalışan bir yedek resim
       return ["https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&q=80"];
   }
 };
@@ -44,7 +62,7 @@ export const generateReferenceImage = async (data: InfluencerData): Promise<stri
   return images[0] || ""; 
 };
 
-// 🎥 VİDEO (Hazır Video)
+// 🎥 VİDEO
 export const generateInfluencerVideo = async (data: InfluencerData | InfluencerProfile, promptOrRefFrame: string): Promise<string> => {
    return "https://assets.mixkit.co/videos/preview/mixkit-girl-in-neon-sign-1232-large.mp4";
 };
@@ -66,6 +84,7 @@ export const generatePersona = async (niche: NicheType, personality: Personality
 
 // 🖼️ PROFİL RESMİ
 export const generateInfluencerImage = async (profile: InfluencerProfile, prompt: string): Promise<string> => {
-  const encodedPrompt = encodeURIComponent(`Portrait of ${profile.name}, ${prompt}`);
-  return `https://image.pollinations.ai/prompt/${encodedPrompt}?width=800&height=800&nologo=true&seed=${Math.floor(Math.random()*1000)}`;
+  const safeName = cleanText(profile.name || "User");
+  const encodedPrompt = encodeURIComponent(`Portrait of ${safeName}`);
+  return `https://pollinations.ai/p/${encodedPrompt}.jpg?width=800&height=800&nologo=true&seed=${Math.floor(Math.random()*1000)}&model=flux`;
 };
