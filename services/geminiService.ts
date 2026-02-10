@@ -4,33 +4,34 @@ import { InfluencerData, NicheType, PersonalityType, InfluencerPersona, Influenc
 // ✅ API Anahtarı (Sadece Metin işlemleri için)
 const getAI = () => new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
 
-// 📸 FOTOĞRAF ÜRETİMİ (TURBO MOD - HIZ LİMİTİNE TAKILMAZ)
+// 📸 FOTOĞRAF ÜRETİMİ (YENİ ADRES MODU)
 export const generateInfluencerPhotos = async (data: InfluencerData): Promise<string[]> => {
-  console.log("Resim üretimi başlıyor (Turbo Mod)...", data);
+  console.log("Resim üretimi yeni adresten başlıyor...", data);
 
   try {
       // 1. Detayları al
       const role = data.scenario?.role || "influencer";
-      const outfit = data.outfit || "fashionable outfit";
+      const outfit = data.outfit || "stylish outfit";
       const pose = data.scenario?.pose || "posing";
       const emotion = data.scenario?.emotion || "confident";
-      const location = data.location || "luxury location";
+      const location = data.location || "studio";
       const time = data.timeAndSeason?.timeOfDay || "daylight";
 
       // 2. Prompt Hazırla
-      const prompt = `Best quality, realistic photo.
-      Subject: ${role}, wearing ${outfit}.
+      const prompt = `Best quality, masterpiece, ultra realistic, 8k, raw photo.
+      Subject: A beautiful ${role}, wearing ${outfit}.
       Action: ${pose} pose, ${emotion} expression.
-      Location: ${location}, ${time}.
-      Details: 8k, photorealistic.`;
+      Location: ${location}, ${time} lighting.
+      Details: high detailed skin texture, cinematic shot, professional photography.`;
 
       // 3. Linki Oluştur
       const encodedPrompt = encodeURIComponent(prompt);
       const randomSeed = Math.floor(Math.random() * 999999);
       
-      // ⚠️ DEĞİŞİKLİK BURADA: 'flux' yerine 'turbo' kullanıyoruz.
-      // Turbo modeli daha hızlıdır ve "Rate Limit" hatasına kolay kolay takılmaz.
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1080&height=1920&nologo=true&seed=${randomSeed}&model=turbo`;
+      // ⚠️ DEĞİŞİKLİK BURADA: 
+      // Eski Adres: image.pollinations.ai/prompt/... (Kapandı)
+      // Yeni Adres: pollinations.ai/p/... (Yeni Sistem)
+      const imageUrl = `https://pollinations.ai/p/${encodedPrompt}?width=1080&height=1920&seed=${randomSeed}&model=flux&nologo=true`;
       
       return [imageUrl];
 
@@ -68,6 +69,6 @@ export const generatePersona = async (niche: NicheType, personality: Personality
 // 🖼️ PROFİL RESMİ
 export const generateInfluencerImage = async (profile: InfluencerProfile, prompt: string): Promise<string> => {
   const encodedPrompt = encodeURIComponent(`Portrait of ${profile.name}, ${prompt}`);
-  // Profil resminde de turbo kullanalım
-  return `https://image.pollinations.ai/prompt/${encodedPrompt}?width=800&height=800&nologo=true&seed=${Math.floor(Math.random()*1000)}&model=turbo`;
+  // Burada da yeni adresi kullanıyoruz
+  return `https://pollinations.ai/p/${encodedPrompt}?width=800&height=800&seed=${Math.floor(Math.random()*1000)}&model=flux&nologo=true`;
 };
