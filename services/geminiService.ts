@@ -4,17 +4,17 @@ import { InfluencerData, NicheType, PersonalityType, InfluencerPersona, Influenc
 // ✅ API Anahtarı
 const getAI = () => new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
 
-// Temizleyici: Sadece İngilizce harfler kalsın, gerisi gitsin.
+// Temizleyici: Sadece İngilizce harfler ve boşluk kalsın
 const cleanText = (text: string) => {
   return text
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Türkçe karakterleri düzelt
-    .replace(/[^a-zA-Z0-9 ]/g, "") // Nokta virgül vs temizle
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Türkçe harfleri düzelt
+    .replace(/[^a-zA-Z0-9 ]/g, "") // Özel işaretleri sil
     .trim();
 };
 
-// 📸 FOTOĞRAF ÜRETİMİ (API KAPISI - CORB HATASI OLMAZ)
+// 📸 FOTOĞRAF ÜRETİMİ (FİNAL DOĞRU ADRES MODU)
 export const generateInfluencerPhotos = async (data: InfluencerData): Promise<string[]> => {
-  console.log("Resim üretimi API Modu ile başlıyor...", data);
+  console.log("Resim üretimi Final Modu ile başlıyor...", data);
 
   try {
       // 1. Verileri temizle
@@ -22,19 +22,18 @@ export const generateInfluencerPhotos = async (data: InfluencerData): Promise<st
       const outfit = cleanText(data.outfit || "fashion");
       const location = cleanText(data.location || "studio");
 
-      // 2. Prompt (Basit cümle)
-      const prompt = `photo of ${role} wearing ${outfit} in ${location} realistic`;
+      // 2. Prompt (Kısa ve öz tutuyoruz ki sunucu hata vermesin)
+      const prompt = `photo of ${role} wearing ${outfit} in ${location} realistic 8k`;
 
       // 3. Linki Oluştur
-      // encodeURIComponent: Boşlukları %20 yapar, URL bozulmaz.
       const encodedPrompt = encodeURIComponent(prompt);
       const randomSeed = Math.floor(Math.random() * 999999);
       
-      // ⚠️ DOĞRU KAPI BURASI:
-      // 'image.pollinations.ai/prompt/' -> Burası direkt JPG verir.
-      // 'pollinations.ai/p/' -> Burası web sayfası verir (Bu yüzden hata alıyorduk).
-      // .jpg uzantısına gerek yoktur, burası zaten resim fabrikasıdır.
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?nologo=true&seed=${randomSeed}&model=turbo`;
+      // ⚠️ DOĞRU ADRES VE FORMAT:
+      // - Adres: pollinations.ai/p/ (Yeni sistem)
+      // - Uzantı: .jpg (Resim olduğu kesinleşir)
+      // - Model: flux (En iyi kalite)
+      const imageUrl = `https://pollinations.ai/p/${encodedPrompt}.jpg?width=1080&height=1920&nologo=true&seed=${randomSeed}&model=flux`;
       
       console.log("Oluşturulan Resim Linki:", imageUrl);
       
@@ -75,5 +74,5 @@ export const generatePersona = async (niche: NicheType, personality: Personality
 export const generateInfluencerImage = async (profile: InfluencerProfile, prompt: string): Promise<string> => {
   const safeName = cleanText(profile.name || "User");
   const encodedPrompt = encodeURIComponent(`Portrait of ${safeName}`);
-  return `https://image.pollinations.ai/prompt/${encodedPrompt}?nologo=true&seed=${Math.floor(Math.random()*1000)}&model=turbo`;
+  return `https://pollinations.ai/p/${encodedPrompt}.jpg?width=800&height=800&nologo=true&seed=${Math.floor(Math.random()*1000)}&model=flux`;
 };
