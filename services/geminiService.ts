@@ -4,8 +4,7 @@ import { InfluencerData, NicheType, PersonalityType, InfluencerPersona, Influenc
 const getAI = () => new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
 
 // 🛡️ VERCEL UYUMLU TEMİZLEYİCİ
-// Türkçe karakterleri, boşlukları ve emojileri yok eder.
-// "Kırmızı Elbise" -> "kirmizi_elbise" olur.
+// Türkçe karakterleri ve boşlukları yok eder. Linkin bozulmasını engeller.
 const cleanText = (text: string) => {
   if (!text) return "model";
   return text
@@ -17,22 +16,23 @@ const cleanText = (text: string) => {
 };
 
 export const generateInfluencerPhotos = async (data: InfluencerData): Promise<string[]> => {
-  console.log("📸 Vercel Modu Başlatılıyor...");
+  // 🚨 KONSOLDA BU YAZIYI GÖRMELİSİN:
+  console.log("🚀 VERCEL FİNAL FIX YÜKLENDİ - YENİ ADRES KULLANILIYOR...");
 
   try {
       const role = cleanText(data.scenario?.role || "influencer");
       const outfit = cleanText(data.outfit || "fashion");
       const location = cleanText(data.location || "studio");
 
-      // 1. Basit Prompt Oluştur (Boşluk yok, sadece alt çizgi)
+      // Prompt: "photo_of_kadin_wearing_kirmizi_elbise..." gibi olur
       const safePrompt = `photo_of_${role}_wearing_${outfit}_in_${location}_realistic_8k`;
       
       const randomSeed = Math.floor(Math.random() * 100000);
 
-      // ⚠️ İŞTE ÇÖZÜMÜN KALBİ:
-      // Adres: https://pollinations.ai/p/
-      // Dosya Adı: safePrompt + .jpg (Bu .jpg uzantısı CORB hatasını %100 engeller)
-      // Parametreler: model=turbo (Hız için), nologo=true
+      // ⚠️ DOĞRU ADRES YAPISI:
+      // 1. pollinations.ai/p/ (Yeni kapı)
+      // 2. .jpg uzantısı (CORB hatasını %100 engeller)
+      // 3. nologo=true (Logo olmasın)
       const imageUrl = `https://pollinations.ai/p/${safePrompt}.jpg?width=720&height=1280&model=turbo&nologo=true&seed=${randomSeed}`;
       
       console.log("✅ ÜRETİLEN LİNK:", imageUrl);
@@ -45,7 +45,7 @@ export const generateInfluencerPhotos = async (data: InfluencerData): Promise<st
   }
 };
 
-// --- Diğer Fonksiyonlar Olduğu Gibi Kalıyor ---
+// --- Diğer Fonksiyonlar (Aynı Kalıyor) ---
 
 export const generateReferenceImage = async (data: InfluencerData): Promise<string> => {
   const images = await generateInfluencerPhotos(data);
