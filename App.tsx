@@ -288,23 +288,8 @@ const App: React.FC = () => {
   };
 
   const resetStudio = () => {
-    setMode(null);
-    setStep(AppStep.IDENTITY);
-    setResults([]);
-    setReferenceFrame(null);
-    setInfluencerData({
-      images: [],
-      companionImage: null,
-      productImage: null,
-      poseImage: null,
-      location: '',
-      outfit: '',
-      timeAndSeason: { timeOfDay: 'Golden Hour', season: 'Summer', weather: 'Clear Sky' },
-      scenario: { pose: '', emotion: 'Smile', action: 'Holding phone', angle: 'Eye level', mood: 'Cinematic', role: 'Influencer' },
-      videoAspectRatio: "9:16",
-      videoMotionPrompt: "",
-      videoMusic: "Lofi & Chill"
-    });
+    // Sayfayı komple yeniler (En temiz sıfırlama yöntemi)
+    window.location.reload();
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, field: 'images' | 'companionImage' | 'productImage' | 'poseImage') => {
