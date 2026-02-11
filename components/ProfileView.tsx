@@ -16,7 +16,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile, onUpdate, onBack }) 
   const handleGenerateImage = async () => {
     setIsGenerating('image');
     try {
-      const url = await generateInfluencerImage(profile, mediaPrompt);
+      const url = await generateInfluencerImage(profile, mediaPrompt); 
       const newAsset: InfluencerAsset = { type: 'image', url, prompt: mediaPrompt, timestamp: Date.now() };
       const updatedProfile = { 
         ...profile, 
