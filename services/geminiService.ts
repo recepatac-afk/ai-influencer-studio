@@ -75,7 +75,6 @@ export const generateInfluencerImage = async (
   prompt: string
 ): Promise<string> => {
   const safeName = cleanText(profile.name || "User");
-  const shortPrompt = cleanText(prompt.substring(0, 30)); // Kısalt
-  
-  return `https://pollinations.ai/p/portrait_of_${safeName}_${shortPrompt}.jpg?width=800&height=800&nologo=true&seed=${Math.floor(Math.random()*999999)}&model=turbo`;
+  const seed = Math.floor(Math.random() * 999999);
+  return `https://pollinations.ai/p/portrait_${safeName}_${seed}.jpg?width=800&height=800&nologo=true&model=turbo`;
 };
