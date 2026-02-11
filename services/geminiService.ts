@@ -72,5 +72,6 @@ export const generatePersona = async (niche: NicheType, personality: Personality
 
 export const generateInfluencerImage = async (profile: InfluencerProfile, prompt: string): Promise<string> => {
   const safeName = cleanText(profile.name || "User");
-  return `https://pollinations.ai/p/portrait_of_${safeName}.jpg?width=800&height=800&nologo=true&seed=${Math.floor(Math.random()*1000)}&model=turbo`;
+  const safePrompt = cleanText(prompt || "portrait");
+  return `https://pollinations.ai/p/${safePrompt}_${safeName}.jpg?width=800&height=800&nologo=true&seed=${Math.floor(Math.random()*999999)}&model=turbo`;
 };
