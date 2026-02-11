@@ -70,8 +70,12 @@ export const generatePersona = async (niche: NicheType, personality: Personality
   }
 };
 
-export const generateInfluencerImage = async (profile: InfluencerProfile, prompt: string): Promise<string> => {
+export const generateInfluencerImage = async (
+  profile: InfluencerProfile,
+  prompt: string
+): Promise<string> => {
   const safeName = cleanText(profile.name || "User");
-  const safePrompt = cleanText(prompt || "portrait");
-  return `https://pollinations.ai/p/${safePrompt}_${safeName}.jpg?width=800&height=800&nologo=true&seed=${Math.floor(Math.random()*999999)}&model=turbo`;
+  const shortPrompt = cleanText(prompt.substring(0, 30)); // Kısalt
+  
+  return `https://pollinations.ai/p/portrait_of_${safeName}_${shortPrompt}.jpg?width=800&height=800&nologo=true&seed=${Math.floor(Math.random()*999999)}&model=turbo`;
 };
